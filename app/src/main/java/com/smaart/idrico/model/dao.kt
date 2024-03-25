@@ -1,6 +1,8 @@
 package com.smaart.idrico.model
 import android.content.Context
 import com.google.gson.Gson
+import com.google.gson.internal.LinkedTreeMap
+
 class DAO constructor(private val context: Context) {
     private val gson = Gson()
     private val prefix = "SHARED_PREFERENCES"
@@ -18,10 +20,9 @@ class DAO constructor(private val context: Context) {
         sharedPrefs.all.forEach { (key, value) -> allValues[key] = value.toString() }
         return allValues
     }
-    fun saveJson(key: String, jsonObject: Any) {
-        val jsonString = gson.toJson(jsonObject)
-        val sharedPrefs = context.getSharedPreferences(prefix, Context.MODE_PRIVATE)
-        sharedPrefs.edit().putString(key, jsonString).apply()
+    fun saveJson(key:String, value: LinkedTreeMap<String, Any>?) {
+        val jsonString = gson.toJson(value)
+        this.save(key,jsonString)
     }
     fun clearAll() {
         val sharedPrefs = context.getSharedPreferences(prefix, Context.MODE_PRIVATE)

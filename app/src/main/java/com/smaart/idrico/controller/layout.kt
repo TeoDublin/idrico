@@ -9,10 +9,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class Layout(){
-    fun get(activity:String,context: Context):String?{
+    fun get(activity:String,context: Context): String? {
         val api = Api()
         val dao = DAO(context)
-        var layout = dao.get(activity)
+        val layout = dao.get(activity)
         if(!layout.isNullOrEmpty()){
             return layout
         }else{
@@ -22,17 +22,7 @@ class Layout(){
                         return layout
                     }else{
                         CoroutineScope(Dispatchers.IO).launch {
-                            val operations=api.actions(dao.get("Token"))
-                            layout = ""
-                            operations?.forEach { (key, value) ->
-                                if (value is LinkedTreeMap<*, *>) {
-                                    val label = value["label"] as? String
-                                    if (!label.isNullOrEmpty()) {
-                                        layout+= "Key: $key, Label: $label\n"
-                                    }
-                                }
-                            }
-                            dao.save(activity, layout!!)
+                            dao.saveJson(activity, api.actions(dao.get("Token")))
                         }
                     }
                 }

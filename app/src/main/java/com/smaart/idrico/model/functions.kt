@@ -5,6 +5,7 @@ import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import com.google.gson.Gson
+import com.google.gson.internal.LinkedTreeMap
 import com.google.gson.reflect.TypeToken
 import com.smaart.idrico.controller.Layout
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +54,7 @@ class Functions(private val context: Context) {
             Toast.makeText(context, "Error starting $activity activity", Toast.LENGTH_SHORT).show()
         }
     }
-    fun waitLayout(activity: String): String {
+    private fun waitLayout(activity: String): String {
         return runBlocking {
             var layout: String? = dao.get(activity)
             val delayMillis = 1000L
@@ -72,6 +73,12 @@ class Functions(private val context: Context) {
             } else {
                 layout
             }
+        }
+    }
+    fun jsonDecodeToMap(jsonString:String): LinkedTreeMap<String, Any>? {
+        return run {
+            val type = object : TypeToken<LinkedTreeMap<String, Any>>() {}.type
+            gson.fromJson(jsonString, type)
         }
     }
 }
