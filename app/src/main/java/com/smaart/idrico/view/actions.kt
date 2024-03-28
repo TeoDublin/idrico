@@ -15,22 +15,34 @@ import com.smaart.idrico.R
 import org.json.JSONObject
 import androidx.appcompat.widget.AppCompatButton
 import android.graphics.drawable.RippleDrawable
+import android.view.LayoutInflater
 
 
 class Actions : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        val intent = intent
-//        val layout = intent.getStringExtra("layout")!!
-//        val jsonLayout = JSONObject(layout)
-//        val keys = jsonLayout.keys()
+        val intent = intent
+        val layout = intent.getStringExtra("layout")!!
+        val jsonLayout = JSONObject(layout)
+        val keys = jsonLayout.keys()
+        val linearLayout=createLayout()
+        keys.forEach { key->
+            val view = jsonLayout.getJSONObject(key);
+            val viewLabel = view.getString("label");
+            linearLayout.addView(createButton(viewLabel))
+            val items=view.getJSONObject("items")
+            val innerLayout=createLayout()
+            items.keys().forEach{ item->
+
+                innerLayout.addView(LayoutInflater.from(this).inflate(R.layout.fragment_set_ip, null))
+            }
+        }
         setContentView(R.layout.actions)
         val parentLayout = findViewById<LinearLayout>(R.id.view)
-        val linearLayout=createLayout()
-        linearLayout.addView(createButton())
+
         parentLayout.addView(linearLayout)
     }
-    private fun createButton():Button{
+    private fun createButton(label:String):Button{
         val button = Button(this)
         button.id = View.generateViewId()
         button.layoutParams = LinearLayout.LayoutParams(
@@ -38,7 +50,7 @@ class Actions : AppCompatActivity() {
             LinearLayout.LayoutParams.WRAP_CONTENT,
             1f
         )
-        button.text = "Common"
+        button.text = label
         button.setTextColor(Color.WHITE)
         button.isAllCaps = false
         val rippleDrawableCommon = RippleDrawable(
