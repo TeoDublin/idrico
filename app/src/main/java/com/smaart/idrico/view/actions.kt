@@ -21,31 +21,98 @@ import android.view.ViewGroup
 
 
 class Actions : AppCompatActivity() {
-    private var layout: String = ""
-    private var jsonLayout: JSONObject = JSONObject()
+//    private var layout: String = ""
+private val layout = "{\n" +
+        "    \"actions\": {\n" +
+        "        \"common\": {\n" +
+        "            \"label\": \"Common\",\n" +
+        "            \"items\": {\n" +
+        "                \"open\": {\n" +
+        "                    \"label\": \"Open\",\n" +
+        "                    \"payload\": \"6810FFFFFFFF0011110404A0170055AA16\"\n" +
+        "                }\n" +
+        "            }\n" +
+        "        },\n" +
+        "        \"network\": {\n" +
+        "            \"label\": \"Network\",\n" +
+        "            \"items\": {\n" +
+        "                \"setIP\": {\n" +
+        "                    \"label\": \"Set IP/Port\",\n" +
+        "                    \"payload\": \"6810{MeterID}001111D216D00101070004{IP1}{PORT1}{IP2}{PORT2}{CHK}16\",\n" +
+        "                    \"parameters\": {\n" +
+        "                        \"MeterID\": {\n" +
+        "                            \"label\": \"S/N\",\n" +
+        "                            \"type\": \"text\",\n" +
+        "                            \"value\": \"equal\",\n" +
+        "                            \"required\": \"^[0-9]{8}\$\"\n" +
+        "                        },\n" +
+        "                        \"CHK\": {\n" +
+        "                            \"type\": \"checksum\"\n" +
+        "                        },\n" +
+        "                        \"IP1\": {\n" +
+        "                            \"label\": \"IP 1\",\n" +
+        "                            \"type\": \"text\",\n" +
+        "                            \"value\": \"IP\",\n" +
+        "                            \"required\": \"^[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\$\"\n" +
+        "                        },\n" +
+        "                        \"PORT1\": {\n" +
+        "                            \"label\": \"Port 1\",\n" +
+        "                            \"type\": \"int\",\n" +
+        "                            \"min\": 1,\n" +
+        "                            \"max\": 65535,\n" +
+        "                            \"value\": \"int4\",\n" +
+        "                            \"required\": \"^[0-9]+\$\"\n" +
+        "                        },\n" +
+        "                        \"IP2\": {\n" +
+        "                            \"label\": \"IP 2\",\n" +
+        "                            \"type\": \"text\",\n" +
+        "                            \"value\": \"IP\",\n" +
+        "                            \"required\": \"^[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\$\"\n" +
+        "                        },\n" +
+        "                        \"PORT2\": {\n" +
+        "                            \"label\": \"Port 2\",\n" +
+        "                            \"type\": \"int\",\n" +
+        "                            \"min\": 1,\n" +
+        "                            \"max\": 65535,\n" +
+        "                            \"value\": \"int4\",\n" +
+        "                            \"required\": \"^[0-9]+\$\"\n" +
+        "                        }\n" +
+        "                    }\n" +
+        "                }\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}"
+    private var jsonLayout = JSONObject(layout)
     private lateinit var keys: MutableIterator<String>
     private lateinit var parentView: LinearLayout
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.actions)
-        layout = intent.getStringExtra("layout")!!
-        jsonLayout = JSONObject(layout)
-        keys = jsonLayout.keys()
+//        layout = intent.getStringExtra("layout")!!
+        val jsonLayout = JSONObject(layout)
+        val actionsObject = jsonLayout.getJSONObject("actions")
         parentView = findViewById<LinearLayout>(R.id.view)
         var isFirst = true
+        var hasFormElements = false
         val parentLayout=createLayout()
-        val formLayout = mutableMapOf<String,LinearLayout>()
-        keys.forEach { key->
-            val obj = jsonLayout.getJSONObject(key);
-            val btnLabel = obj.getString("label");
-            parentLayout.addView(createButton(btnLabel))
+        var formLayout=createLayout()
+        actionsObject.keys().forEach { key->
+            parentLayout.addView(createButton(key))
             if(isFirst){
                 isFirst=false
-                formLayout[key] = createLayout()
+                val formObj=actionsObject.getJSONObject(key)
+                try {
+                    formLayout=createFormButton(formObj,formLayout)
+                    hasFormElements=true
+                } catch (e:Exception) {
+                    hasFormElements=false
+                    Log.e("actions", "no items", e)
+                }
             }
         }
         parentView.addView(parentLayout)
-        parentView=createItems(formLayout,parentView)
+        if(hasFormElements) parentView.addView(formLayout)
     }
     private fun createButton(label:String):Button{
         val button = Button(this)
@@ -67,6 +134,36 @@ class Actions : AppCompatActivity() {
         button.setPadding(8, 8, 8, 8)
         return button
     }
+    private fun createFormButton(parentObj:JSONObject,formLayout:LinearLayout):LinearLayout{
+        try {
+            val items = parentObj.getJSONObject("items")
+            items.keys().forEach{ itemKey ->
+                val obj = items.getJSONObject(itemKey);
+                val label = obj.getString("label");
+                val button = Button(this)
+                button.id = View.generateViewId()
+                button.layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+                button.text = label
+                button.setTextColor(Color.WHITE)
+                button.isAllCaps = false
+                val rippleDrawableCommon = RippleDrawable(
+                    ColorStateList.valueOf(Color.GRAY),
+                    null,
+                    null
+                )
+                button.background = rippleDrawableCommon
+                button.setPadding(8, 8, 8, 8)
+                formLayout.addView(button)
+            }
+        } catch (e:Exception){
+            Log.e("actions", "no items", e)
+        }
+        return formLayout
+    }
     private fun createLayout():LinearLayout{
         val typedValue = TypedValue()
         theme.resolveAttribute(android.R.attr.colorPrimary, typedValue, true)
@@ -82,30 +179,5 @@ class Actions : AppCompatActivity() {
         linearLayout.setBackgroundColor(colorPrimary)
         linearLayout.gravity=Gravity.CENTER_VERTICAL
         return linearLayout
-    }
-    private fun createItems(formLayout: MutableMap<String, LinearLayout>,parentView:LinearLayout):LinearLayout {
-        formLayout.forEach{ (key,form)->
-            val items = jsonLayout.getJSONObject(key).getJSONObject("items")
-            var fragment: View = View(this)
-            items.keys().forEach { itemKey ->
-                when (itemKey) {
-                    "open" -> {
-                        val inflater = LayoutInflater.from(this)
-                        fragment = inflater.inflate(R.layout.fragment_open, form, false)
-                        val button = fragment.findViewById<Button>(R.id.open)
-                        button.text = "test1"
-                    }
-                    "setIP" -> {
-                        val inflater = LayoutInflater.from(this)
-                        fragment = inflater.inflate(R.layout.fragment_set_ip, form, false)
-                        val button = fragment.findViewById<Button>(R.id.set_ip)
-                        button.text = "test2"
-                    }
-                }
-                form.addView(fragment)
-            }
-            parentView.addView(form)
-        }
-        return parentView
     }
 }
