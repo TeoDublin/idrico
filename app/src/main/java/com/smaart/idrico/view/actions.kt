@@ -140,23 +140,7 @@ private val layout = "{\n" +
             items.keys().forEach{ itemKey ->
                 val obj = items.getJSONObject(itemKey);
                 val label = obj.getString("label");
-                val button = Button(this)
-                button.id = View.generateViewId()
-                button.layoutParams = LinearLayout.LayoutParams(
-                    0,
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    1f
-                )
-                button.text = label
-                button.setTextColor(Color.WHITE)
-                button.isAllCaps = false
-                val rippleDrawableCommon = RippleDrawable(
-                    ColorStateList.valueOf(Color.GRAY),
-                    null,
-                    null
-                )
-                button.background = rippleDrawableCommon
-                button.setPadding(8, 8, 8, 8)
+                val button = createButton(label)
                 formLayout.addView(button)
             }
         } catch (e:Exception){
