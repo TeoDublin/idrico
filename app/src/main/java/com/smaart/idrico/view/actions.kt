@@ -2,6 +2,7 @@ package com.smaart.idrico.view
 
 import android.app.ActionBar.LayoutParams
 import android.content.res.ColorStateList
+import android.content.res.Resources
 import android.graphics.Color
 import android.os.Bundle
 import android.util.TypedValue
@@ -18,6 +19,8 @@ import android.graphics.drawable.RippleDrawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.marginTop
+import androidx.core.view.setMargins
 
 
 class Actions : AppCompatActivity() {
@@ -29,6 +32,10 @@ private val layout = "{\n" +
         "            \"items\": {\n" +
         "                \"open\": {\n" +
         "                    \"label\": \"Open\",\n" +
+        "                    \"payload\": \"6810FFFFFFFF0011110404A0170055AA16\"\n" +
+        "                },\n" +
+        "                \"close\": {\n" +
+        "                    \"label\": \"Close\",\n" +
         "                    \"payload\": \"6810FFFFFFFF0011110404A0170055AA16\"\n" +
         "                }\n" +
         "            }\n" +
@@ -95,10 +102,10 @@ private val layout = "{\n" +
         parentView = findViewById<LinearLayout>(R.id.view)
         var isFirst = true
         var hasFormElements = false
-        val parentLayout=createLayout()
-        var formLayout=createLayout()
+        val parentLayout=createLayout("horizontal")
+        var formLayout=createLayout("vertical")
         actionsObject.keys().forEach { key->
-            parentLayout.addView(createButton(key))
+            parentLayout.addView(createButton(key,"horizontal"))
             if(isFirst){
                 isFirst=false
                 val formObj=actionsObject.getJSONObject(key)
@@ -114,23 +121,30 @@ private val layout = "{\n" +
         parentView.addView(parentLayout)
         if(hasFormElements) parentView.addView(formLayout)
     }
-    private fun createButton(label:String):Button{
+    private fun createButton(label:String,orientation: String):Button{
         val button = Button(this)
         button.id = View.generateViewId()
-        button.layoutParams = LinearLayout.LayoutParams(
-            0,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            1f
-        )
+        when(orientation){
+            "vertical"->{
+                val layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    0,
+                    1f
+                )
+                layoutParams.setMargins(0,0,0,16.dp)
+                button.layoutParams=layoutParams
+            }
+            else->{
+                button.layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+            }
+        }
         button.text = label
-        button.setTextColor(Color.WHITE)
+        button.setTextColor(Color.BLACK)
         button.isAllCaps = false
-        val rippleDrawableCommon = RippleDrawable(
-            ColorStateList.valueOf(Color.GRAY),
-            null,
-            null
-        )
-        button.background = rippleDrawableCommon
         button.setPadding(8, 8, 8, 8)
         return button
     }
@@ -140,7 +154,9 @@ private val layout = "{\n" +
             items.keys().forEach{ itemKey ->
                 val obj = items.getJSONObject(itemKey);
                 val label = obj.getString("label");
-                val button = createButton(label)
+                val button = createButton(label,"vertical")
+                button.setBackgroundColor(Color.DKGRAY)
+                button.setTextColor(Color.WHITE)
                 formLayout.addView(button)
             }
         } catch (e:Exception){
@@ -148,20 +164,27 @@ private val layout = "{\n" +
         }
         return formLayout
     }
-    private fun createLayout():LinearLayout{
-        val typedValue = TypedValue()
-        theme.resolveAttribute(android.R.attr.colorPrimary, typedValue, true)
-        val colorPrimary = typedValue.data
+    private fun createLayout(orientation:String):LinearLayout{
         val linearLayout = LinearLayout(this)
         val layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
+        layoutParams.setMargins(16.dp,16.dp,16.dp,16.dp)
         linearLayout.id = View.generateViewId()
         linearLayout.layoutParams = layoutParams
-        linearLayout.orientation=LinearLayout.HORIZONTAL
-        linearLayout.setBackgroundColor(colorPrimary)
-        linearLayout.gravity=Gravity.CENTER_VERTICAL
+        when(orientation){
+            "vertical"->{
+                linearLayout.orientation=LinearLayout.VERTICAL
+                linearLayout.gravity=Gravity.CENTER_HORIZONTAL
+            }
+            else->{
+                linearLayout.orientation=LinearLayout.HORIZONTAL
+                linearLayout.gravity=Gravity.CENTER_VERTICAL
+            }
+        }
         return linearLayout
     }
+    val Int.dp: Int
+        get() = (this * Resources.getSystem().displayMetrics.density).toInt()
 }
