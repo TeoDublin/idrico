@@ -19,8 +19,11 @@ import android.graphics.drawable.RippleDrawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.core.view.marginTop
 import androidx.core.view.setMargins
+import com.smaart.idrico.model.Payload
 
 
 class Actions : AppCompatActivity() {
@@ -101,25 +104,37 @@ private val layout = "{\n" +
         val actionsObject = jsonLayout.getJSONObject("actions")
         parentView = findViewById<LinearLayout>(R.id.view)
         var isFirst = true
-        var hasFormElements = false
-        val parentLayout=createLayout("horizontal")
-        var formLayout=createLayout("vertical")
+        val parentLayout=createLayout("horizontal",true)
+        val formLayouts: MutableMap<String, LinearLayout> = mutableMapOf()
+        val formBtns: MutableMap<String, Button> = mutableMapOf()
         actionsObject.keys().forEach { key->
-            parentLayout.addView(createButton(key,"horizontal"))
-            if(isFirst){
-                isFirst=false
-                val formObj=actionsObject.getJSONObject(key)
-                try {
-                    formLayout=createFormButton(formObj,formLayout)
-                    hasFormElements=true
-                } catch (e:Exception) {
-                    hasFormElements=false
-                    Log.e("actions", "no items", e)
+            val formObj=actionsObject.getJSONObject(key)
+            try {
+                val formLayout=createLayout("vertical",isFirst)
+                formLayouts[key]=createFormButton(formObj,formLayout)
+                val btn=createButton(key,"horizontal")
+                formBtns[key]=btn
+            } catch (e:Exception) {
+                Log.e("actions", "no items", e)
+            }
+            if(isFirst)isFirst=false
+        }
+        formBtns.keys.forEach { key ->
+            val btn = formBtns[key]
+            val formLayout = formLayouts[key]
+            btn?.setOnClickListener {
+                formLayout?.visibility = View.VISIBLE
+                formLayouts.keys.forEach { formKey ->
+                    if (key != formKey) {
+                        val otherFormLayout = formLayouts[formKey]
+                        otherFormLayout?.visibility = View.GONE
+                    }
                 }
             }
+            parentLayout.addView(btn)
         }
         parentView.addView(parentLayout)
-        if(hasFormElements) parentView.addView(formLayout)
+        formLayouts.keys.forEach{key-> parentView.addView(formLayouts[key])}
     }
     private fun createButton(label:String,orientation: String):Button{
         val button = Button(this)
@@ -154,17 +169,21 @@ private val layout = "{\n" +
             items.keys().forEach{ itemKey ->
                 val obj = items.getJSONObject(itemKey);
                 val label = obj.getString("label");
-                val button = createButton(label,"vertical")
-                button.setBackgroundColor(Color.DKGRAY)
-                button.setTextColor(Color.WHITE)
-                formLayout.addView(button)
+                val btn = createButton(label,"vertical")
+                btn.tag = obj.getString("payload")
+                btn.setBackgroundColor(Color.DKGRAY)
+                btn.setTextColor(Color.WHITE)
+                btn.setOnClickListener{
+                    Toast.makeText(this, btn.tag.toString(), Toast.LENGTH_SHORT).show()
+                }
+                formLayout.addView(btn)
             }
         } catch (e:Exception){
             Log.e("actions", "no items", e)
         }
         return formLayout
     }
-    private fun createLayout(orientation:String):LinearLayout{
+    private fun createLayout(orientation:String,visible:Boolean):LinearLayout{
         val linearLayout = LinearLayout(this)
         val layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
@@ -173,6 +192,7 @@ private val layout = "{\n" +
         layoutParams.setMargins(16.dp,16.dp,16.dp,16.dp)
         linearLayout.id = View.generateViewId()
         linearLayout.layoutParams = layoutParams
+        linearLayout.isVisible=visible
         when(orientation){
             "vertical"->{
                 linearLayout.orientation=LinearLayout.VERTICAL
