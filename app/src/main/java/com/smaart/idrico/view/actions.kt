@@ -1,6 +1,7 @@
 package com.smaart.idrico.view
 
 import android.app.ActionBar.LayoutParams
+import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Color
@@ -19,7 +20,9 @@ import android.graphics.drawable.RippleDrawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.core.view.marginTop
 import androidx.core.view.setMargins
@@ -99,7 +102,7 @@ private val layout = "{\n" +
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.actions)
-//        layout = intent.getStringExtra("layout")!!
+        //layout = intent.getStringExtra("layout")!!
         val jsonLayout = JSONObject(layout)
         val actionsObject = jsonLayout.getJSONObject("actions")
         parentView = findViewById<LinearLayout>(R.id.view)
@@ -171,17 +174,59 @@ private val layout = "{\n" +
                 val label = obj.getString("label");
                 val btn = createButton(label,"vertical")
                 btn.tag = obj.getString("payload")
+                btn.setOnClickListener{
+                    if(obj.has("parameters")){
+                        val constructedPayload = parameterDialog(obj, payload)
+                        payload(constructedPayload)
+                    }else{
+                        payload(btn.tag.toString())
+                    }
+                }
                 btn.setBackgroundColor(Color.DKGRAY)
                 btn.setTextColor(Color.WHITE)
-                btn.setOnClickListener{
-                    Toast.makeText(this, btn.tag.toString(), Toast.LENGTH_SHORT).show()
-                }
+
                 formLayout.addView(btn)
             }
         } catch (e:Exception){
             Log.e("actions", "no items", e)
         }
         return formLayout
+    }
+    private fun parameterDialog(obj:JSONObject,payload: String):String{
+        val parameterMap = mutableMapOf<String, String>()
+        val parameters = obj.getJSONObject("parameters")
+        val dialog = AlertDialog.Builder(this@Actions)
+
+        parameters.keys().forEach { paramKey ->
+            val paramObj = parameters.getJSONObject(paramKey)
+            val paramType = paramObj.getString("type")
+
+        }
+        dialog.setPositiveButton("OK") { _, _ ->
+
+        }
+        dialog.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.cancel()
+        }
+        dialog.show()
+    }
+    private fun parameterDialogBuild(context: Context, label: String, callback: (String) -> Unit) {
+
+        builder.setTitle(label)
+        val input = EditText(context)
+        builder.setView(input)
+
+    }
+    private fun constructPayload(originalPayload: String, parameterMap: Map<String, String>): String {
+        var constructedPayload = originalPayload
+        // Replace placeholders in the payload string with actual parameter values from parameterMap
+        parameterMap.forEach { (key, value) ->
+            constructedPayload = constructedPayload.replace("{$key}", value)
+        }
+        return constructedPayload
+    }
+    private  fun payload(payload:String){
+        Toast.makeText(this, payload, Toast.LENGTH_SHORT).show()
     }
     private fun createLayout(orientation:String,visible:Boolean):LinearLayout{
         val linearLayout = LinearLayout(this)
