@@ -20,7 +20,9 @@ import android.graphics.drawable.RippleDrawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
@@ -173,13 +175,12 @@ private val layout = "{\n" +
                 val obj = items.getJSONObject(itemKey);
                 val label = obj.getString("label");
                 val btn = createButton(label,"vertical")
-                btn.tag = obj.getString("payload")
+                val payload = obj.getString("payload")
                 btn.setOnClickListener{
                     if(obj.has("parameters")){
-                        val constructedPayload = parameterDialog(obj, payload)
-                        payload(constructedPayload)
+                        parameterDialog(obj, payload)
                     }else{
-                        payload(btn.tag.toString())
+                        payload(payload)
                     }
                 }
                 btn.setBackgroundColor(Color.DKGRAY)
@@ -192,30 +193,31 @@ private val layout = "{\n" +
         }
         return formLayout
     }
-    private fun parameterDialog(obj:JSONObject,payload: String):String{
-        val parameterMap = mutableMapOf<String, String>()
+    private fun parameterDialog(obj:JSONObject,payload: String){
+        val layout = createLayout("vertical",true)
         val parameters = obj.getJSONObject("parameters")
-        val dialog = AlertDialog.Builder(this@Actions)
-
         parameters.keys().forEach { paramKey ->
+            val keyTextView = TextView(this@Actions)
+            keyTextView.text = paramKey
+            layout.addView(keyTextView)
             val paramObj = parameters.getJSONObject(paramKey)
-            val paramType = paramObj.getString("type")
-
+            val input: View = when (val paramType = paramObj.getString("type")) {
+                "text" -> EditText(this@Actions)
+                "int" -> EditText(this@Actions)
+                "checksum" -> CheckBox(this@Actions)
+                else -> throw IllegalArgumentException("Unsupported parameter type: $paramType")
+            }
+            layout.addView(input)
         }
+        val dialog = AlertDialog.Builder(this@Actions)
         dialog.setPositiveButton("OK") { _, _ ->
-
+            payload(payload)
         }
         dialog.setNegativeButton("Cancel") { dialog, _ ->
             dialog.cancel()
         }
+        dialog.setView(layout)
         dialog.show()
-    }
-    private fun parameterDialogBuild(context: Context, label: String, callback: (String) -> Unit) {
-
-        builder.setTitle(label)
-        val input = EditText(context)
-        builder.setView(input)
-
     }
     private fun constructPayload(originalPayload: String, parameterMap: Map<String, String>): String {
         var constructedPayload = originalPayload
