@@ -12,12 +12,12 @@ class Main : AppCompatActivity(){
         super.onCreate(savedInstanceState)
         val email = dao.get("email")
         val pass = dao.get("pass")
-//        dao.clearAll()
-//        if(!email.isNullOrEmpty() && !pass.isNullOrEmpty()){
-//            fn.login(email,pass)
-//        }else{
-//            fn.runActivity(LOGIN_VIEW)
-//        }
+        //dao.clearAll()
+        if(!email.isNullOrEmpty() && !pass.isNullOrEmpty()){
+            fn.login(email,pass)
+        }else{
+            fn.runActivity(LOGIN_VIEW)
+        }
         fn.runActivity(FIRST_VIEW)
     }
 }

@@ -17,6 +17,8 @@ import com.smaart.idrico.R
 import org.json.JSONObject
 import androidx.appcompat.widget.AppCompatButton
 import android.graphics.drawable.RippleDrawable
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -28,83 +30,19 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.core.view.marginTop
 import androidx.core.view.setMargins
+import androidx.core.widget.addTextChangedListener
 import com.smaart.idrico.model.Payload
 
 
 class Actions : AppCompatActivity() {
-//    private var layout: String = ""
-private val layout = "{\n" +
-        "    \"actions\": {\n" +
-        "        \"common\": {\n" +
-        "            \"label\": \"Common\",\n" +
-        "            \"items\": {\n" +
-        "                \"open\": {\n" +
-        "                    \"label\": \"Open\",\n" +
-        "                    \"payload\": \"6810FFFFFFFF0011110404A0170055AA16\"\n" +
-        "                },\n" +
-        "                \"close\": {\n" +
-        "                    \"label\": \"Close\",\n" +
-        "                    \"payload\": \"6810FFFFFFFF0011110404A0170055AA16\"\n" +
-        "                }\n" +
-        "            }\n" +
-        "        },\n" +
-        "        \"network\": {\n" +
-        "            \"label\": \"Network\",\n" +
-        "            \"items\": {\n" +
-        "                \"setIP\": {\n" +
-        "                    \"label\": \"Set IP/Port\",\n" +
-        "                    \"payload\": \"6810{MeterID}001111D216D00101070004{IP1}{PORT1}{IP2}{PORT2}{CHK}16\",\n" +
-        "                    \"parameters\": {\n" +
-        "                        \"MeterID\": {\n" +
-        "                            \"label\": \"S/N\",\n" +
-        "                            \"type\": \"text\",\n" +
-        "                            \"value\": \"equal\",\n" +
-        "                            \"required\": \"^[0-9]{8}\$\"\n" +
-        "                        },\n" +
-        "                        \"CHK\": {\n" +
-        "                            \"type\": \"checksum\"\n" +
-        "                        },\n" +
-        "                        \"IP1\": {\n" +
-        "                            \"label\": \"IP 1\",\n" +
-        "                            \"type\": \"text\",\n" +
-        "                            \"value\": \"IP\",\n" +
-        "                            \"required\": \"^[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\$\"\n" +
-        "                        },\n" +
-        "                        \"PORT1\": {\n" +
-        "                            \"label\": \"Port 1\",\n" +
-        "                            \"type\": \"int\",\n" +
-        "                            \"min\": 1,\n" +
-        "                            \"max\": 65535,\n" +
-        "                            \"value\": \"int4\",\n" +
-        "                            \"required\": \"^[0-9]+\$\"\n" +
-        "                        },\n" +
-        "                        \"IP2\": {\n" +
-        "                            \"label\": \"IP 2\",\n" +
-        "                            \"type\": \"text\",\n" +
-        "                            \"value\": \"IP\",\n" +
-        "                            \"required\": \"^[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\$\"\n" +
-        "                        },\n" +
-        "                        \"PORT2\": {\n" +
-        "                            \"label\": \"Port 2\",\n" +
-        "                            \"type\": \"int\",\n" +
-        "                            \"min\": 1,\n" +
-        "                            \"max\": 65535,\n" +
-        "                            \"value\": \"int4\",\n" +
-        "                            \"required\": \"^[0-9]+\$\"\n" +
-        "                        }\n" +
-        "                    }\n" +
-        "                }\n" +
-        "            }\n" +
-        "        }\n" +
-        "    }\n" +
-        "}"
+    private var layout: String = ""
     private var jsonLayout = JSONObject(layout)
     private lateinit var keys: MutableIterator<String>
     private lateinit var parentView: LinearLayout
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.actions)
-        //layout = intent.getStringExtra("layout")!!
+        layout = intent.getStringExtra("layout")!!
         val jsonLayout = JSONObject(layout)
         val actionsObject = jsonLayout.getJSONObject("actions")
         parentView = findViewById<LinearLayout>(R.id.view)
@@ -196,6 +134,7 @@ private val layout = "{\n" +
     private fun parameterDialog(obj:JSONObject,payload: String){
         val layout = createLayout("vertical",true)
         val parameters = obj.getJSONObject("parameters")
+        val parameterValues = mutableMapOf<String, Any>()
         parameters.keys().forEach { paramKey ->
             val keyTextView = TextView(this@Actions)
             keyTextView.text = paramKey
@@ -208,24 +147,33 @@ private val layout = "{\n" +
                 else -> throw IllegalArgumentException("Unsupported parameter type: $paramType")
             }
             layout.addView(input)
+            if (input is EditText) {
+                input.addTextChangedListener(object : TextWatcher {
+                    override fun beforeTextChanged(c: CharSequence?, s: Int, b: Int, cn: Int) {}
+                    override fun onTextChanged(c: CharSequence?, s: Int, b: Int, cn: Int) {}
+                    override fun afterTextChanged(s: Editable?) {
+                        parameterValues[paramKey] = s.toString()
+                    }
+                })
+            } else if (input is CheckBox) {
+                input.setOnCheckedChangeListener { _, isChecked ->
+                    parameterValues[paramKey] = isChecked
+                }
+            }
         }
         val dialog = AlertDialog.Builder(this@Actions)
         dialog.setPositiveButton("OK") { _, _ ->
-            payload(payload)
+            var updatedPayload = payload
+            parameterValues.forEach { (key, value) ->
+                updatedPayload = updatedPayload.replace("{$key}", value.toString())
+            }
+            payload(updatedPayload)
         }
         dialog.setNegativeButton("Cancel") { dialog, _ ->
             dialog.cancel()
         }
         dialog.setView(layout)
         dialog.show()
-    }
-    private fun constructPayload(originalPayload: String, parameterMap: Map<String, String>): String {
-        var constructedPayload = originalPayload
-        // Replace placeholders in the payload string with actual parameter values from parameterMap
-        parameterMap.forEach { (key, value) ->
-            constructedPayload = constructedPayload.replace("{$key}", value)
-        }
-        return constructedPayload
     }
     private  fun payload(payload:String){
         Toast.makeText(this, payload, Toast.LENGTH_SHORT).show()
@@ -252,6 +200,6 @@ private val layout = "{\n" +
         }
         return linearLayout
     }
-    val Int.dp: Int
+    private val Int.dp: Int
         get() = (this * Resources.getSystem().displayMetrics.density).toInt()
 }
