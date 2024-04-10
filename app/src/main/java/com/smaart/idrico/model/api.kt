@@ -15,8 +15,7 @@ import retrofit2.http.POST
 import retrofit2.http.GET
 import retrofit2.http.Header
 class Api {
-    public suspend fun login(email:String?, pass:String?):String{
-        val BASE_URL = "https://integraaposta.net/gestione/api/"
+    public suspend fun login(email:String?, pass:String?): Response<LoginData> {
         val okHttpClient = OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
@@ -31,10 +30,9 @@ class Api {
 
         val apiService: LoginInterface = retrofit.create(LoginInterface::class.java)
         val response = apiService.getResponse(email, pass)
-        return response.body()?.token ?: throw Exception("Token not found")
+        return response
     }
     public suspend fun actions(token:String?):LinkedTreeMap<String,Any>?{
-        val BASE_URL = "https://integraaposta.net/gestione/api/"
         val okHttpClient = OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.HEADERS

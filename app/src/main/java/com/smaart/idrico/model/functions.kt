@@ -16,27 +16,23 @@ import kotlinx.coroutines.runBlocking
 
 class Functions(private val context: Context) {
     val gson = Gson()
-    val dao = DAO(context)
-    val api = Api()
-    fun showAlert(msg: String?) {
-        AlertDialog.Builder(context)
-            .setTitle("Alert")
-            .setMessage(msg)
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
-    }
+    private val dao = DAO(context)
+    private val api = Api()
     fun login(email: String?, pass: String?) {
         CoroutineScope(Dispatchers.IO).launch  {
-            val token = api.login(email,pass)
-            dao.save("Token",token)
-            runActivity(FIRST_VIEW)
+            try {
+                val response = api.login(email,pass)
+                if(response.code()!=200){
+                    Toast.makeText(context, response.message(), Toast.LENGTH_SHORT).show()
+                }else{
+                    val token=response.body()?.token ?: throw Exception("Token not found")
+                    dao.save("Token",token)
+                    runActivity(FIRST_VIEW)
+                }
+            }catch (e:Exception){
+                Toast.makeText(context, "Error $e", Toast.LENGTH_SHORT).show()
+            }
         }
-    }
-    inline fun <reified T> jsonDecode(jsonString: String): T {
-        val type = object : TypeToken<T>() {}.type
-        return gson.fromJson(jsonString, type)
     }
     fun runActivity(activity: String) {
         val buffedLayout = Layout().get(activity,context)
@@ -75,10 +71,7 @@ class Functions(private val context: Context) {
             }
         }
     }
-    fun jsonDecodeToMap(jsonString:String): LinkedTreeMap<String, Any>? {
-        return run {
-            val type = object : TypeToken<LinkedTreeMap<String, Any>>() {}.type
-            gson.fromJson(jsonString, type)
-        }
+    fun needsLogin():Boolean{
+        return true
     }
 }
