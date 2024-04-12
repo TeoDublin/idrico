@@ -5,8 +5,8 @@ import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import com.google.gson.Gson
-import com.google.gson.internal.LinkedTreeMap
-import com.google.gson.reflect.TypeToken
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import com.smaart.idrico.controller.Layout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +27,9 @@ class Functions(private val context: Context) {
                 }else{
                     val token=response.body()?.token ?: throw Exception("Token not found")
                     dao.save("Token",token)
+                    val tokenExpiry=LocalDateTime.now().plusHours(TOKEN_EXPIRY_HOURS)
+                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                    dao.save("token_expiry",tokenExpiry.format(formatter))
                     runActivity(FIRST_VIEW)
                 }
             }catch (e:Exception){
@@ -73,5 +76,9 @@ class Functions(private val context: Context) {
     }
     fun needsLogin():Boolean{
         return true
+    }
+    private fun startTokenExpirationService() {
+        val serviceIntent = Intent(this, TokenExpirationService::class.java)
+        startService(serviceIntent)
     }
 }

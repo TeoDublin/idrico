@@ -18,6 +18,5 @@ class Main : AppCompatActivity(){
         }else{
             fn.runActivity(LOGIN_VIEW)
         }
-        //fn.runActivity(FIRST_VIEW)
     }
 }
