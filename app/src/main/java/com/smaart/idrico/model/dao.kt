@@ -1,31 +1,16 @@
 package com.smaart.idrico.model
 import android.content.Context
+import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.internal.LinkedTreeMap
 
-class DAO constructor(private val context: Context) {
-    private val gson = Gson()
-    private val prefix = "SHARED_PREFERENCES"
-    fun save(key: String, value:String) {
-        val sharedPrefs = context.getSharedPreferences(prefix, Context.MODE_PRIVATE)
-        sharedPrefs.edit().putString(key, value).apply()
-    }
-    fun get(key:String): String? {
-        val sharedPrefs = context.getSharedPreferences(prefix, Context.MODE_PRIVATE)
-        return sharedPrefs.getString(key, null)
-    }
-    fun getAll(): Map<String, String> {
-        val sharedPrefs = context.getSharedPreferences(prefix, Context.MODE_PRIVATE)
-        val allValues = mutableMapOf<String, String>()
-        sharedPrefs.all.forEach { (key, value) -> allValues[key] = value.toString() }
-        return allValues
-    }
-    fun saveJson(key:String, value: LinkedTreeMap<String, Any>?) {
-        val jsonString = gson.toJson(value)
-        this.save(key,jsonString)
-    }
-    fun clearAll() {
-        val sharedPrefs = context.getSharedPreferences(prefix, Context.MODE_PRIVATE)
-        sharedPrefs.edit().clear().apply()
-    }
+class DAO(applicationContext:Context) {
+    private val gson=Gson()
+    private val prefix="SHARED_PREFERENCES"
+    private val sharedPrefs: SharedPreferences=applicationContext.getSharedPreferences(prefix,Context.MODE_PRIVATE)
+    fun save(key:String,value:String) { sharedPrefs.edit().putString(key, value).apply() }
+    fun save(save:Map<String,String>){ save.forEach{(key,value)->this.save(key,value)} }
+    fun save(key:String,value:LinkedTreeMap<String,Any>?) { this.save(key,gson.toJson(value)) }
+    fun get(key:String):String?{ return sharedPrefs.getString(key, null) }
+    fun clearAll(){ sharedPrefs.edit().clear().apply() }
 }

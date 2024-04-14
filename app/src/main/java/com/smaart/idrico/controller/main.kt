@@ -1,22 +1,19 @@
 package com.smaart.idrico.controller
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import com.smaart.idrico.model.DAO
+import com.smaart.idrico.model.APP_VERSION
+import com.smaart.idrico.model.Base
 import com.smaart.idrico.model.FIRST_VIEW
-import com.smaart.idrico.model.Functions
-import com.smaart.idrico.model.LOGIN_VIEW
-class Main : AppCompatActivity(){
-    private val dao = DAO(this)
-    private val fn = Functions(this)
-    override fun onCreate(savedInstanceState: Bundle?) {
+import com.smaart.idrico.view.LoginView
+
+class Main: Base() {
+    override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
-        val email = dao.get("email")
-        val pass = dao.get("pass")
-        dao.clearAll()
-        if(fn.needsLogin()){
-            fn.login(email,pass)
+        val version=dao.get("appVersion")
+        if(version.isNullOrEmpty()||version!=APP_VERSION)dao.clearAll()
+        if(needsLogin()){
+            startActivity(this, LoginView::class.java)
         }else{
-            fn.runActivity(LOGIN_VIEW)
+            startActivityFromApi(this,FIRST_VIEW,"actions")
         }
     }
 }

@@ -1,24 +1,24 @@
-package com.smaart.idrico.model
+package com.smaart.idrico.service
 
 import android.app.Service
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
+import android.os.Build
 import android.os.IBinder
-import java.text.SimpleDateFormat
+import androidx.annotation.RequiresApi
+import com.smaart.idrico.model.DAO
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 
-class TokenExpirationService : Service() {
-    private val dao = DAO(this@TokenExpirationService)
+class tokenExpiration : Service() {
+    private val dao = DAO(this@tokenExpiration)
 
     override fun onCreate() {
         super.onCreate()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        checkTokenValidity()
+        if(!tokenIsValid()) restartApplication()
         return START_STICKY
     }
 
@@ -26,9 +26,11 @@ class TokenExpirationService : Service() {
         return null
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun tokenIsValid():Boolean {
         return !(isBeforeNow(dao.get("token_expiry")!!))
     }
+    @RequiresApi(Build.VERSION_CODES.O)
     fun isBeforeNow(dateTimeString: String): Boolean {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val dateTime = LocalDateTime.parse(dateTimeString, formatter)
