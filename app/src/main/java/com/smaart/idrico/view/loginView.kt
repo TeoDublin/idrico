@@ -1,11 +1,12 @@
 package com.smaart.idrico.view
 import android.os.Bundle
+import android.view.Menu
 import android.widget.Button
 import android.widget.EditText
 import com.smaart.idrico.R
 import com.smaart.idrico.model.Base
 
-class LoginView:Base() {
+class LoginView:Base(R.style.login) {
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
         val loginView=R.layout.login
@@ -17,4 +18,5 @@ class LoginView:Base() {
             login(this,email,pass)
         }
     }
+    override fun onCreateOptionsMenu(menu: Menu): Boolean { return false }
 }

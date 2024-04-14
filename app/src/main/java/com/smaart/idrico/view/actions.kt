@@ -35,6 +35,7 @@ class Actions:Base() {
                 val formLayout=createLayout("vertical",isFirst)
                 formLayouts[key]=createActions(formObj,formLayout)
                 val btn=createButton(key,"horizontal")
+                if(isFirst) btn.setBackgroundResource(R.drawable.btn_clicked) else btn.setBackgroundColor(Color.TRANSPARENT)
                 formBtns[key]=btn
             } catch (e:Exception) {
                 Log.e("actions", "no items", e)
@@ -45,6 +46,7 @@ class Actions:Base() {
             val btn=formBtns[key]
             val formLayout=formLayouts[key]
             btn?.setOnClickListener {
+                btn.setBackgroundResource(R.drawable.btn_clicked)
                 formLayout?.visibility=View.VISIBLE
                 formLayouts.keys.forEach { formKey ->
                     if (key!=formKey) {
@@ -52,10 +54,18 @@ class Actions:Base() {
                         otherFormLayout?.visibility=View.GONE
                     }
                 }
+                formBtns.keys.forEach{k->
+                    if(k!=key){
+                        val b=formBtns[k]
+                        b?.setBackgroundColor(Color.TRANSPARENT)
+                    }
+                }
             }
             parentLayout.addView(btn)
         }
         parentView.addView(parentLayout)
+        parentView.addView(createBorder())
+
         formLayouts.keys.forEach{key-> parentView.addView(formLayouts[key])}
     }
     private fun createActions(parentObj:JSONObject,formLayout:LinearLayout):LinearLayout{
@@ -120,8 +130,8 @@ class Actions:Base() {
             }
             payload(updatedPayload)
         }
-        dialog.setNegativeButton("Cancel") { dialog, _ ->
-            dialog.cancel()
+        dialog.setNegativeButton("Cancel") { d, _ ->
+            d.cancel()
         }
         dialog.setView(layout)
         dialog.show()

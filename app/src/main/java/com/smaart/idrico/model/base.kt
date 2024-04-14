@@ -5,6 +5,7 @@ import android.content.res.Resources
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -27,15 +28,15 @@ import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-open class Base: AppCompatActivity(){
+open class Base(private val themeId:Int?=null): AppCompatActivity(){
     lateinit var dao:DAO
     lateinit var fn:Functions
-    lateinit var api:Api
     private val Int.dp:Int get()=(this * Resources.getSystem().displayMetrics.density).toInt()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         dao=DAO(applicationContext)
         fn=Functions(applicationContext)
+        setTheme(themeId?:R.style.base)
     }
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_base, menu)
@@ -53,15 +54,17 @@ open class Base: AppCompatActivity(){
         }
     }
     fun createLayout(orientation:String,visible:Boolean): LinearLayout {
+        val primaryColor = theme("primaryColor","color")
         val linearLayout= LinearLayout(this)
         val layoutParams= LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        layoutParams.setMargins(16.dp,16.dp,16.dp,16.dp)
+        layoutParams.setMargins(0,8.dp,0,1.dp)
         linearLayout.id= View.generateViewId()
         linearLayout.layoutParams=layoutParams
         linearLayout.isVisible=visible
+        linearLayout.setBackgroundColor(primaryColor)
         when(orientation){
             "vertical"->{
                 linearLayout.orientation= LinearLayout.VERTICAL
@@ -84,7 +87,6 @@ open class Base: AppCompatActivity(){
                     0,
                     1f
                 )
-                layoutParams.setMargins(0,0,0,16.dp)
                 button.layoutParams=layoutParams
             }
             else->{
@@ -98,13 +100,30 @@ open class Base: AppCompatActivity(){
         button.text=label
         button.setTextColor(Color.BLACK)
         button.isAllCaps=false
-        button.setPadding(8, 8, 8, 8)
+        button.setPadding(2, 8, 2, 0)
         return button
+    }
+    fun createBorder():View{
+        val border = View(this)
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            resources.getDimensionPixelSize(R.dimen.dp05)
+        )
+        border.layoutParams = params
+        border.setBackgroundColor(ContextCompat.getColor(this, R.color.gray))
+        return border
+    }
+    fun theme(attrName: String, attType:String): Int {
+        val attrId = resources.getIdentifier(attrName, attType, applicationContext.packageName)
+        val typedValue = TypedValue()
+        val theme = applicationContext.theme
+        theme.resolveAttribute(attrId, typedValue, true)
+        return typedValue.data
     }
     fun login(context: Context,email:String?,pass:String?) {
         CoroutineScope(Dispatchers.IO).launch  {
             try {
-                val response=api.login(email,pass)
+                val response=Api().login(email,pass)
                 if(response.code()!=200){
                     Toast.makeText(context,response.message(), Toast.LENGTH_SHORT).show()
                 }else{
@@ -121,7 +140,7 @@ open class Base: AppCompatActivity(){
                     startActivityFromApi(context,FIRST_VIEW,"actions")
                 }
             }catch(e:Exception){
-                Toast.makeText(applicationContext,"Error $e", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context,"Error $e", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -164,4 +183,5 @@ open class Base: AppCompatActivity(){
         val serviceIntent=Intent(applicationContext, tokenExpiration::class.java)
         ContextCompat.startForegroundService(applicationContext,serviceIntent)
     }
+
 }
