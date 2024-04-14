@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="login" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/blue</item>
+    </style>
+    <style name="base" parent="Theme.AppCompat.Light">
+        <item name="colorPrimary">@color/blue</item>
+        <item name="colorSecondary">@color/white</item>
+    </style>
+    <style name="btn_borderless" parent="Widget.AppCompat.Button.Borderless">
+        <!-- Customize any additional attributes here -->
+    </style>
+
+</resources>
