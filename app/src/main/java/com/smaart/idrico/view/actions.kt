@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import com.smaart.idrico.R
 import com.smaart.idrico.model.Base
 import org.json.JSONObject
@@ -19,11 +20,78 @@ import org.json.JSONObject
 class Actions:Base() {
     private var layout:String=""
     private lateinit var parentView:LinearLayout
+    private var firstColor:Int = 0
+    private var firstOnColor:Int=0
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
+        firstColor = R.color.blue
+        firstOnColor = R.color.white
         setContentView(R.layout.actions)
         parentView=findViewById(R.id.view)
-        layout=intent.getStringExtra("layout")!!
+//        layout=intent.getStringExtra("layout")!!
+        layout = "{\n" +
+                "        \"common\": {\n" +
+                "            \"label\": \"Common\",\n" +
+                "            \"items\": {\n" +
+                "                \"open\": {\n" +
+                "                    \"label\": \"Open\",\n" +
+                "                    \"payload\": \"6810FFFFFFFF0011110404A0170055AA16\"\n" +
+                "                },\n" +
+                "                \"close\": {\n" +
+                "                    \"label\": \"Close\",\n" +
+                "                    \"payload\": \"6810FFFFFFFF0011110404A0170055AA16\"\n" +
+                "                }\n" +
+                "            }\n" +
+                "        },\n" +
+                "        \"network\": {\n" +
+                "            \"label\": \"Network\",\n" +
+                "            \"items\": {\n" +
+                "                \"setIP\": {\n" +
+                "                    \"label\": \"Set IP/Port\",\n" +
+                "                    \"payload\": \"6810{MeterID}001111D216D00101070004{IP1}{PORT1}{IP2}{PORT2}{CHK}16\",\n" +
+                "                    \"parameters\": {\n" +
+                "                        \"MeterID\": {\n" +
+                "                            \"label\": \"S/N\",\n" +
+                "                            \"type\": \"text\",\n" +
+                "                            \"value\": \"equal\",\n" +
+                "                            \"required\": \"^[0-9]{8}\$\"\n" +
+                "                        },\n" +
+                "                        \"CHK\": {\n" +
+                "                            \"type\": \"checksum\"\n" +
+                "                        },\n" +
+                "                        \"IP1\": {\n" +
+                "                            \"label\": \"IP 1\",\n" +
+                "                            \"type\": \"text\",\n" +
+                "                            \"value\": \"IP\",\n" +
+                "                            \"required\": \"^[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\$\"\n" +
+                "                        },\n" +
+                "                        \"PORT1\": {\n" +
+                "                            \"label\": \"Port 1\",\n" +
+                "                            \"type\": \"int\",\n" +
+                "                            \"min\": 1,\n" +
+                "                            \"max\": 65535,\n" +
+                "                            \"value\": \"int4\",\n" +
+                "                            \"required\": \"^[0-9]+\$\"\n" +
+                "                        },\n" +
+                "                        \"IP2\": {\n" +
+                "                            \"label\": \"IP 2\",\n" +
+                "                            \"type\": \"text\",\n" +
+                "                            \"value\": \"IP\",\n" +
+                "                            \"required\": \"^[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\$\"\n" +
+                "                        },\n" +
+                "                        \"PORT2\": {\n" +
+                "                            \"label\": \"Port 2\",\n" +
+                "                            \"type\": \"int\",\n" +
+                "                            \"min\": 1,\n" +
+                "                            \"max\": 65535,\n" +
+                "                            \"value\": \"int4\",\n" +
+                "                            \"required\": \"^[0-9]+\$\"\n" +
+                "                        }\n" +
+                "                    }\n" +
+                "                }\n" +
+                "            }\n" +
+                "        }\n" +
+                "}"
         val jsonLayout=JSONObject(layout)
         var isFirst=true
         val parentLayout=createLayout("horizontal",true)
@@ -34,8 +102,12 @@ class Actions:Base() {
             try {
                 val formLayout=createLayout("vertical",isFirst)
                 formLayouts[key]=createActions(formObj,formLayout)
-                val btn=createButton(key,"horizontal")
-                if(isFirst) btn.setBackgroundResource(R.drawable.btn_clicked) else btn.setBackgroundColor(Color.TRANSPARENT)
+                val btn=createButton(key,"horizontal",R.color.white,R.color.black)
+//                if(isFirst) btn.setBackgroundResource(R.drawable.btn_clicked) else btn.setBackgroundColor(Color.TRANSPARENT)
+                if(isFirst){
+                    btn.setBackgroundColor(firstColor)
+                    btn.setTextColor(firstOnColor)
+                }
                 formBtns[key]=btn
             } catch (e:Exception) {
                 Log.e("actions", "no items", e)
@@ -46,7 +118,7 @@ class Actions:Base() {
             val btn=formBtns[key]
             val formLayout=formLayouts[key]
             btn?.setOnClickListener {
-                btn.setBackgroundResource(R.drawable.btn_clicked)
+//                btn.setBackgroundResource(R.drawable.btn_clicked)
                 formLayout?.visibility=View.VISIBLE
                 formLayouts.keys.forEach { formKey ->
                     if (key!=formKey) {
@@ -57,7 +129,7 @@ class Actions:Base() {
                 formBtns.keys.forEach{k->
                     if(k!=key){
                         val b=formBtns[k]
-                        b?.setBackgroundColor(Color.TRANSPARENT)
+                        b?.setBackgroundColor(firstColor)
                     }
                 }
             }
@@ -74,7 +146,7 @@ class Actions:Base() {
             items.keys().forEach{ itemKey ->
                 val obj=items.getJSONObject(itemKey)
                 val label=obj.getString("label")
-                val btn=createButton(label,"vertical")
+                val btn=createButton(label,"actions",firstColor,firstOnColor)
                 val payload=obj.getString("payload")
                 btn.setOnClickListener{
                     if(obj.has("parameters")){
@@ -83,8 +155,6 @@ class Actions:Base() {
                         payload(payload)
                     }
                 }
-                btn.setBackgroundColor(Color.DKGRAY)
-                btn.setTextColor(Color.WHITE)
                 formLayout.addView(btn)
             }
         } catch (e:Exception){

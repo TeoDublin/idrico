@@ -4,11 +4,9 @@
         <item name="colorPrimary">@color/blue</item>
     </style>
     <style name="base" parent="Theme.AppCompat.Light">
-        <item name="colorPrimary">@color/blue</item>
-        <item name="colorSecondary">@color/white</item>
+        <item name="colorPrimary">@color/white</item>
+        <item name="colorOnPrimary">@color/blue</item>
+        <item name="colorSecondary">@color/blue</item>
+        <item name="colorOnSecondary">@color/white</item>
     </style>
-    <style name="btn_borderless" parent="Widget.AppCompat.Button.Borderless">
-        <!-- Customize any additional attributes here -->
-    </style>
-
 </resources>

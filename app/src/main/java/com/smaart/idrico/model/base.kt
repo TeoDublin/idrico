@@ -3,6 +3,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
@@ -16,6 +17,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.core.view.marginTop
+import androidx.core.view.setMargins
 import com.smaart.idrico.R
 import com.smaart.idrico.controller.Layout
 import com.smaart.idrico.service.tokenExpiration
@@ -54,7 +57,6 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
         }
     }
     fun createLayout(orientation:String,visible:Boolean): LinearLayout {
-        val primaryColor = theme("primaryColor","color")
         val linearLayout= LinearLayout(this)
         val layoutParams= LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
@@ -64,7 +66,6 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
         linearLayout.id= View.generateViewId()
         linearLayout.layoutParams=layoutParams
         linearLayout.isVisible=visible
-        linearLayout.setBackgroundColor(primaryColor)
         when(orientation){
             "vertical"->{
                 linearLayout.orientation= LinearLayout.VERTICAL
@@ -77,7 +78,7 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
         }
         return linearLayout
     }
-    fun createButton(label:String,orientation:String): Button {
+    fun createButton(label:String,orientation:String,color:Int,textColor:Int): Button {
         val button= Button(this)
         button.id=View.generateViewId()
         when(orientation){
@@ -88,19 +89,38 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
                     1f
                 )
                 button.layoutParams=layoutParams
+                button.setBackgroundColor(color)
+                button.setTextColor(textColor)
+                button.setPadding(2, 8, 2, 0)
             }
-            else->{
+            "horizontal"->{
                 button.layoutParams=LinearLayout.LayoutParams(
                     0,
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     1f
                 )
+                button.setBackgroundColor(color)
+                button.setTextColor(textColor)
+                button.setPadding(2, 8, 2, 0)
+            }
+            "actions"->{
+                val screenWidth = this.resources.displayMetrics.widthPixels
+                val layoutParams = LinearLayout.LayoutParams(
+                    (screenWidth * 0.6).toInt(),
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                layoutParams.gravity = Gravity.CENTER
+                layoutParams.setMargins(0, 10.dp, 0, 0)
+
+                button.layoutParams = layoutParams
+                button.setBackgroundColor(color)
+                button.setTextColor(textColor)
+                button.setPadding(2.dp, 40.dp, 2.dp, 40.dp)
             }
         }
         button.text=label
-        button.setTextColor(Color.BLACK)
         button.isAllCaps=false
-        button.setPadding(2, 8, 2, 0)
+
         return button
     }
     fun createBorder():View{
@@ -109,15 +129,15 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
             LinearLayout.LayoutParams.MATCH_PARENT,
             resources.getDimensionPixelSize(R.dimen.dp05)
         )
+        params.setMargins(0,5.dp,0,30.dp)
         border.layoutParams = params
         border.setBackgroundColor(ContextCompat.getColor(this, R.color.gray))
         return border
     }
-    fun theme(attrName: String, attType:String): Int {
-        val attrId = resources.getIdentifier(attrName, attType, applicationContext.packageName)
+    fun Context.theme(attrName: String, attType: String, themeResId: Int): Int {
         val typedValue = TypedValue()
-        val theme = applicationContext.theme
-        theme.resolveAttribute(attrId, typedValue, true)
+        theme.obtainStyledAttributes(themeResId, intArrayOf(resources.getIdentifier(attrName, attType, packageName)))
+            .getValue(0, typedValue)
         return typedValue.data
     }
     fun login(context: Context,email:String?,pass:String?) {
