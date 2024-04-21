@@ -12,20 +12,16 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat
 import com.smaart.idrico.R
 import com.smaart.idrico.model.Base
+import com.smaart.idrico.model.setOnSwipeListener
 import org.json.JSONObject
 
 class Actions:Base() {
     private var layout:String=""
     private lateinit var parentView:LinearLayout
-    private var firstColor:Int = 0
-    private var firstOnColor:Int=0
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
-        firstColor = R.color.blue
-        firstOnColor = R.color.white
         setContentView(R.layout.actions)
         parentView=findViewById(R.id.view)
 //        layout=intent.getStringExtra("layout")!!
@@ -102,34 +98,55 @@ class Actions:Base() {
             try {
                 val formLayout=createLayout("vertical",isFirst)
                 formLayouts[key]=createActions(formObj,formLayout)
-                val btn=createButton(key,"horizontal",R.color.white,R.color.black)
-//                if(isFirst) btn.setBackgroundResource(R.drawable.btn_clicked) else btn.setBackgroundColor(Color.TRANSPARENT)
+                val btn=createButton(key,"horizontal")
                 if(isFirst){
-                    btn.setBackgroundColor(firstColor)
-                    btn.setTextColor(firstOnColor)
+                    isFirst=false
+                    btn.setBackgroundResource(R.drawable.btn_clicked)
+                }else{
+                    btn.setBackgroundResource(R.drawable.btn_not_clicked)
                 }
                 formBtns[key]=btn
             } catch (e:Exception) {
                 Log.e("actions", "no items", e)
             }
-            if(isFirst)isFirst=false
         }
         formBtns.keys.forEach { key ->
             val btn=formBtns[key]
             val formLayout=formLayouts[key]
-            btn?.setOnClickListener {
-//                btn.setBackgroundResource(R.drawable.btn_clicked)
-                formLayout?.visibility=View.VISIBLE
+            val swipeListener = {
+                Log.e("TEST","TEST")
+                btn?.setBackgroundResource(R.drawable.btn_clicked)
+                formLayout?.visibility = View.VISIBLE
                 formLayouts.keys.forEach { formKey ->
-                    if (key!=formKey) {
-                        val otherFormLayout=formLayouts[formKey]
-                        otherFormLayout?.visibility=View.GONE
+                    if (key != formKey) {
+                        val otherFormLayout = formLayouts[formKey]
+                        otherFormLayout?.visibility = View.GONE
                     }
                 }
-                formBtns.keys.forEach{k->
-                    if(k!=key){
-                        val b=formBtns[k]
-                        b?.setBackgroundColor(firstColor)
+                formBtns.keys.forEach { k ->
+                    if (k != key) {
+                        val b = formBtns[k]
+                        b?.setBackgroundResource(R.drawable.btn_not_clicked)
+                    }
+                }
+            }
+            btn?.setOnSwipeListener(swipeListener)
+            btn?.setOnClickListener {
+                btn.setBackgroundResource(R.drawable.btn_clicked)
+                formLayout?.visibility = View.VISIBLE
+                formLayouts.keys.forEach { formKey ->
+                    if (key != formKey) {
+                        val otherFormLayout = formLayouts[formKey]
+                        otherFormLayout?.visibility = View.GONE
+                    }else{
+                        formLayout?.setOnSwipeListener(swipeListener)
+                        swipeListener.invoke()
+                    }
+                }
+                formBtns.keys.forEach { k ->
+                    if (k != key) {
+                        val b = formBtns[k]
+                        b?.setBackgroundResource(R.drawable.btn_not_clicked)
                     }
                 }
             }
@@ -146,7 +163,9 @@ class Actions:Base() {
             items.keys().forEach{ itemKey ->
                 val obj=items.getJSONObject(itemKey)
                 val label=obj.getString("label")
-                val btn=createButton(label,"actions",firstColor,firstOnColor)
+                val btn=createButton(label,"actions")
+                btn.setBackgroundResource(R.drawable.btn)
+                btn.setTextColor(Color.WHITE)
                 val payload=obj.getString("payload")
                 btn.setOnClickListener{
                     if(obj.has("parameters")){

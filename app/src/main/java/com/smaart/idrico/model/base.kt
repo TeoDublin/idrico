@@ -2,14 +2,14 @@ package com.smaart.idrico.model
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
+import android.view.GestureDetector
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
@@ -17,8 +17,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import androidx.core.view.marginTop
-import androidx.core.view.setMargins
 import com.smaart.idrico.R
 import com.smaart.idrico.controller.Layout
 import com.smaart.idrico.service.tokenExpiration
@@ -30,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.abs
 
 open class Base(private val themeId:Int?=null): AppCompatActivity(){
     lateinit var dao:DAO
@@ -56,29 +55,71 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
             else -> super.onOptionsItemSelected(item)
         }
     }
-    fun createLayout(orientation:String,visible:Boolean): LinearLayout {
-        val linearLayout= LinearLayout(this)
-        val layoutParams= LinearLayout.LayoutParams(
+    fun createLayout(
+        orientation: String,
+        visible: Boolean,
+        initialSwipeCallback: (() -> Unit)? = null
+    ): LinearLayout {
+        val linearLayout = LinearLayout(this)
+        val layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        layoutParams.setMargins(0,8.dp,0,1.dp)
-        linearLayout.id= View.generateViewId()
-        linearLayout.layoutParams=layoutParams
-        linearLayout.isVisible=visible
-        when(orientation){
-            "vertical"->{
-                linearLayout.orientation= LinearLayout.VERTICAL
-                linearLayout.gravity= Gravity.CENTER_HORIZONTAL
+        layoutParams.setMargins(0, 15.dp, 0, 1.dp)
+        linearLayout.id = View.generateViewId()
+        linearLayout.layoutParams = layoutParams
+        linearLayout.isVisible = visible
+        when (orientation) {
+            "vertical" -> {
+                linearLayout.orientation = LinearLayout.VERTICAL
+                linearLayout.gravity = Gravity.CENTER_HORIZONTAL
             }
-            else->{
-                linearLayout.orientation= LinearLayout.HORIZONTAL
-                linearLayout.gravity= Gravity.CENTER_VERTICAL
+            else -> {
+                linearLayout.orientation = LinearLayout.HORIZONTAL
+                linearLayout.gravity = Gravity.CENTER_VERTICAL
             }
         }
+
+        // Define swipe threshold constants
+        val SWIPE_THRESHOLD = 100
+        val SWIPE_VELOCITY_THRESHOLD = 100
+
+        var swipeCallback: (() -> Unit)? = initialSwipeCallback
+
+        // Declare GestureDetector
+        val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                val diffX = e2.x - (e1?.x ?: 0f)
+                if (abs(diffX) > SWIPE_THRESHOLD && abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                    if (diffX > 0) {
+                        // Swipe to the right detected
+                        swipeCallback?.invoke()
+                    }
+                }
+                return super.onFling(e1, e2, velocityX, velocityY)
+            }
+        })
+
+        // Set up swipe listener
+        linearLayout.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+        }
+
+        // Setter function for swipe callback
+        fun setSwipeCallback(callback: (() -> Unit)?) {
+            swipeCallback = callback
+        }
+
         return linearLayout
     }
-    fun createButton(label:String,orientation:String,color:Int,textColor:Int): Button {
+
+
+    fun createButton(label:String,orientation:String): Button {
         val button= Button(this)
         button.id=View.generateViewId()
         when(orientation){
@@ -89,8 +130,6 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
                     1f
                 )
                 button.layoutParams=layoutParams
-                button.setBackgroundColor(color)
-                button.setTextColor(textColor)
                 button.setPadding(2, 8, 2, 0)
             }
             "horizontal"->{
@@ -99,8 +138,6 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     1f
                 )
-                button.setBackgroundColor(color)
-                button.setTextColor(textColor)
                 button.setPadding(2, 8, 2, 0)
             }
             "actions"->{
@@ -113,8 +150,6 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
                 layoutParams.setMargins(0, 10.dp, 0, 0)
 
                 button.layoutParams = layoutParams
-                button.setBackgroundColor(color)
-                button.setTextColor(textColor)
                 button.setPadding(2.dp, 40.dp, 2.dp, 40.dp)
             }
         }
