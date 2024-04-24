@@ -14,80 +14,20 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.smaart.idrico.R
 import com.smaart.idrico.model.Base
-import com.smaart.idrico.model.setOnSwipeListener
+import com.smaart.idrico.model.Swipe
 import org.json.JSONObject
 
 class Actions:Base() {
     private var layout:String=""
+    private var curentLayoutKey:String=""
     private lateinit var parentView:LinearLayout
+    private lateinit var swipe: Swipe
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
+        swipe= Swipe(this)
         setContentView(R.layout.actions)
         parentView=findViewById(R.id.view)
-//        layout=intent.getStringExtra("layout")!!
-        layout = "{\n" +
-                "        \"common\": {\n" +
-                "            \"label\": \"Common\",\n" +
-                "            \"items\": {\n" +
-                "                \"open\": {\n" +
-                "                    \"label\": \"Open\",\n" +
-                "                    \"payload\": \"6810FFFFFFFF0011110404A0170055AA16\"\n" +
-                "                },\n" +
-                "                \"close\": {\n" +
-                "                    \"label\": \"Close\",\n" +
-                "                    \"payload\": \"6810FFFFFFFF0011110404A0170055AA16\"\n" +
-                "                }\n" +
-                "            }\n" +
-                "        },\n" +
-                "        \"network\": {\n" +
-                "            \"label\": \"Network\",\n" +
-                "            \"items\": {\n" +
-                "                \"setIP\": {\n" +
-                "                    \"label\": \"Set IP/Port\",\n" +
-                "                    \"payload\": \"6810{MeterID}001111D216D00101070004{IP1}{PORT1}{IP2}{PORT2}{CHK}16\",\n" +
-                "                    \"parameters\": {\n" +
-                "                        \"MeterID\": {\n" +
-                "                            \"label\": \"S/N\",\n" +
-                "                            \"type\": \"text\",\n" +
-                "                            \"value\": \"equal\",\n" +
-                "                            \"required\": \"^[0-9]{8}\$\"\n" +
-                "                        },\n" +
-                "                        \"CHK\": {\n" +
-                "                            \"type\": \"checksum\"\n" +
-                "                        },\n" +
-                "                        \"IP1\": {\n" +
-                "                            \"label\": \"IP 1\",\n" +
-                "                            \"type\": \"text\",\n" +
-                "                            \"value\": \"IP\",\n" +
-                "                            \"required\": \"^[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\$\"\n" +
-                "                        },\n" +
-                "                        \"PORT1\": {\n" +
-                "                            \"label\": \"Port 1\",\n" +
-                "                            \"type\": \"int\",\n" +
-                "                            \"min\": 1,\n" +
-                "                            \"max\": 65535,\n" +
-                "                            \"value\": \"int4\",\n" +
-                "                            \"required\": \"^[0-9]+\$\"\n" +
-                "                        },\n" +
-                "                        \"IP2\": {\n" +
-                "                            \"label\": \"IP 2\",\n" +
-                "                            \"type\": \"text\",\n" +
-                "                            \"value\": \"IP\",\n" +
-                "                            \"required\": \"^[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\$\"\n" +
-                "                        },\n" +
-                "                        \"PORT2\": {\n" +
-                "                            \"label\": \"Port 2\",\n" +
-                "                            \"type\": \"int\",\n" +
-                "                            \"min\": 1,\n" +
-                "                            \"max\": 65535,\n" +
-                "                            \"value\": \"int4\",\n" +
-                "                            \"required\": \"^[0-9]+\$\"\n" +
-                "                        }\n" +
-                "                    }\n" +
-                "                }\n" +
-                "            }\n" +
-                "        }\n" +
-                "}"
+        layout=intent.getStringExtra("layout")!!
         val jsonLayout=JSONObject(layout)
         var isFirst=true
         val parentLayout=createLayout("horizontal",true)
@@ -110,52 +50,41 @@ class Actions:Base() {
                 Log.e("actions", "no items", e)
             }
         }
+        swipe.formLayouts=formLayouts
         formBtns.keys.forEach { key ->
             val btn=formBtns[key]
             val formLayout=formLayouts[key]
-            val swipeListener = {
-                Log.e("TEST","TEST")
-                btn?.setBackgroundResource(R.drawable.btn_clicked)
-                formLayout?.visibility = View.VISIBLE
-                formLayouts.keys.forEach { formKey ->
-                    if (key != formKey) {
-                        val otherFormLayout = formLayouts[formKey]
-                        otherFormLayout?.visibility = View.GONE
-                    }
-                }
-                formBtns.keys.forEach { k ->
-                    if (k != key) {
-                        val b = formBtns[k]
-                        b?.setBackgroundResource(R.drawable.btn_not_clicked)
-                    }
-                }
-            }
-            btn?.setOnSwipeListener(swipeListener)
             btn?.setOnClickListener {
-                btn.setBackgroundResource(R.drawable.btn_clicked)
-                formLayout?.visibility = View.VISIBLE
-                formLayouts.keys.forEach { formKey ->
-                    if (key != formKey) {
-                        val otherFormLayout = formLayouts[formKey]
-                        otherFormLayout?.visibility = View.GONE
-                    }else{
-                        formLayout?.setOnSwipeListener(swipeListener)
-                        swipeListener.invoke()
-                    }
-                }
-                formBtns.keys.forEach { k ->
-                    if (k != key) {
-                        val b = formBtns[k]
-                        b?.setBackgroundResource(R.drawable.btn_not_clicked)
-                    }
-                }
+                if (formLayout != null) btnLogic(btn,formBtns,formLayout,formLayouts,key)
             }
             parentLayout.addView(btn)
         }
         parentView.addView(parentLayout)
         parentView.addView(createBorder())
-
+        parentView.setOnTouchListener(swipe)
         formLayouts.keys.forEach{key-> parentView.addView(formLayouts[key])}
+    }
+    private fun btnLogic(
+        btn:Button,
+        formBtns:MutableMap<String,Button>,
+        formLayout:View,
+        formLayouts: MutableMap<String, LinearLayout>,
+        key:String){
+        swipe.currentLayout=key
+        btn.setBackgroundResource(R.drawable.btn_clicked)
+        formLayout.visibility = View.VISIBLE
+        formLayouts.keys.forEach { formKey ->
+            if (key != formKey) {
+                val otherFormLayout = formLayouts[formKey]
+                otherFormLayout?.visibility = View.GONE
+            }
+        }
+        formBtns.keys.forEach { k ->
+            if (k != key) {
+                val b = formBtns[k]
+                b?.setBackgroundResource(R.drawable.btn_not_clicked)
+            }
+        }
     }
     private fun createActions(parentObj:JSONObject,formLayout:LinearLayout):LinearLayout{
         try {
