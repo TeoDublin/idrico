@@ -15,16 +15,25 @@ import androidx.appcompat.app.AlertDialog
 import com.smaart.idrico.R
 import com.smaart.idrico.model.Base
 import com.smaart.idrico.model.Swipe
+import com.smaart.idrico.model.SwipeActions
 import org.json.JSONObject
 
-class Actions:Base() {
+class Actions:Base(), SwipeActions {
     private var layout:String=""
     private var curentLayoutKey:String=""
     private lateinit var parentView:LinearLayout
     private lateinit var swipe: Swipe
+    override fun onSwipeRight() {
+        Log.e("TEST", "onSwipeRight LOG FROM THE INTERFACE")
+        // Add your logic for right swipe
+    }
+
+    override fun onSwipeLeft() {
+        Log.e("TEST", "onSwipeLeft LOG FROM THE INTERFACE")
+    }
+
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
-        swipe= Swipe(this)
         setContentView(R.layout.actions)
         parentView=findViewById(R.id.view)
         layout=intent.getStringExtra("layout")!!
@@ -50,7 +59,6 @@ class Actions:Base() {
                 Log.e("actions", "no items", e)
             }
         }
-        swipe.formLayouts=formLayouts
         formBtns.keys.forEach { key ->
             val btn=formBtns[key]
             val formLayout=formLayouts[key]
@@ -61,7 +69,7 @@ class Actions:Base() {
         }
         parentView.addView(parentLayout)
         parentView.addView(createBorder())
-        parentView.setOnTouchListener(swipe)
+        parentView.setOnTouchListener(SwipeActions(this))
         formLayouts.keys.forEach{key-> parentView.addView(formLayouts[key])}
     }
     private fun btnLogic(
@@ -70,7 +78,6 @@ class Actions:Base() {
         formLayout:View,
         formLayouts: MutableMap<String, LinearLayout>,
         key:String){
-        swipe.currentLayout=key
         btn.setBackgroundResource(R.drawable.btn_clicked)
         formLayout.visibility = View.VISIBLE
         formLayouts.keys.forEach { formKey ->

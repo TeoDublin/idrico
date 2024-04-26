@@ -4,12 +4,12 @@ import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Button
 import android.widget.LinearLayout
 import kotlin.math.abs
 
 class Swipe(context: Context) : View.OnTouchListener {
-    lateinit var formLayouts:MutableMap<String, LinearLayout>
-    var currentLayout:String=""
+
     private val gestureDetector: GestureDetector
     init {
         gestureDetector = GestureDetector(context, GestureListener())
@@ -45,9 +45,13 @@ class Swipe(context: Context) : View.OnTouchListener {
         }
     }
     fun onSwipeRight() {
-        Log.e("TEST","RIGHT "+this.currentLayout)
+        Log.e("TEST","onSwipeRight LOG FROM THE CLASS")
     }
     fun onSwipeLeft() {
-        Log.e("TEST","LEFT "+this.currentLayout)
+        Log.e("TEST","onSwipeLeft LOG FROM THE CLASS")
     }
+}
+interface SwipeActions {
+    fun onSwipeRight()
+    fun onSwipeLeft()
 }
