@@ -5,11 +5,9 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
-import android.view.GestureDetector
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
-import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
@@ -28,7 +26,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.math.abs
 
 open class Base(private val themeId:Int?=null): AppCompatActivity(){
     lateinit var dao:DAO
@@ -57,8 +54,7 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
     }
     fun createLayout(
         orientation: String,
-        visible: Boolean,
-        initialSwipeCallback: (() -> Unit)? = null
+        visible: Boolean
     ): LinearLayout {
         val linearLayout = LinearLayout(this)
         val layoutParams = LinearLayout.LayoutParams(
@@ -67,7 +63,6 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
         )
         layoutParams.setMargins(0, 15.dp, 0, 1.dp)
         linearLayout.id = View.generateViewId()
-        linearLayout.layoutParams = layoutParams
         linearLayout.isVisible = visible
         when (orientation) {
             "vertical" -> {
@@ -79,46 +74,9 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
                 linearLayout.gravity = Gravity.CENTER_VERTICAL
             }
         }
-
-        // Define swipe threshold constants
-        val SWIPE_THRESHOLD = 100
-        val SWIPE_VELOCITY_THRESHOLD = 100
-
-        var swipeCallback: (() -> Unit)? = initialSwipeCallback
-
-        // Declare GestureDetector
-        val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onFling(
-                e1: MotionEvent?,
-                e2: MotionEvent,
-                velocityX: Float,
-                velocityY: Float
-            ): Boolean {
-                val diffX = e2.x - (e1?.x ?: 0f)
-                if (abs(diffX) > SWIPE_THRESHOLD && abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                    if (diffX > 0) {
-                        // Swipe to the right detected
-                        swipeCallback?.invoke()
-                    }
-                }
-                return super.onFling(e1, e2, velocityX, velocityY)
-            }
-        })
-
-        // Set up swipe listener
-        linearLayout.setOnTouchListener { _, event ->
-            gestureDetector.onTouchEvent(event)
-        }
-
-        // Setter function for swipe callback
-        fun setSwipeCallback(callback: (() -> Unit)?) {
-            swipeCallback = callback
-        }
-
+        linearLayout.layoutParams = layoutParams
         return linearLayout
     }
-
-
     fun createButton(label:String,orientation:String): Button {
         val button= Button(this)
         button.id=View.generateViewId()
@@ -129,6 +87,7 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
                     0,
                     1f
                 )
+                button.textSize= 8.dp.toFloat()
                 button.layoutParams=layoutParams
                 button.setPadding(2, 8, 2, 0)
             }
@@ -138,6 +97,7 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     1f
                 )
+                button.textSize= 8.dp.toFloat()
                 button.setPadding(2, 8, 2, 0)
             }
             "actions"->{
@@ -146,16 +106,15 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
                     (screenWidth * 0.6).toInt(),
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
+                button.textSize= 10.dp.toFloat()
                 layoutParams.gravity = Gravity.CENTER
                 layoutParams.setMargins(0, 10.dp, 0, 0)
-
                 button.layoutParams = layoutParams
                 button.setPadding(2.dp, 40.dp, 2.dp, 40.dp)
             }
         }
         button.text=label
         button.isAllCaps=false
-
         return button
     }
     fun createBorder():View{

@@ -4,17 +4,19 @@ import com.google.gson.annotations.SerializedName
 import com.google.gson.internal.LinkedTreeMap
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
-import retrofit2.http.POST
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.POST
+
 class Api {
-    public suspend fun login(email:String?, pass:String?): Response<LoginData> {
+    public suspend fun login(email: String?, pass: String?): Response<LoginData> {
         val okHttpClient = OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
@@ -26,10 +28,13 @@ class Api {
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .addCallAdapterFactory(CoroutineCallAdapterFactory())
             .build()
-
-        val apiService: LoginInterface = retrofit.create(LoginInterface::class.java)
-        val response = apiService.getResponse(email, pass)
-        return response
+        return try {
+            val apiService: LoginInterface = retrofit.create(LoginInterface::class.java)
+            apiService.getResponse(email, pass)
+        } catch (e: Exception) {
+            val errorMessage = "Error: ${e.message}"
+            Response.error(500, errorMessage.toResponseBody())
+        }
     }
     public suspend fun actions(token:String?):LinkedTreeMap<String,Any>?{
         val okHttpClient = OkHttpClient.Builder()
