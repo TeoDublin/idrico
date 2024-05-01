@@ -17,7 +17,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.smaart.idrico.R
 import com.smaart.idrico.controller.Layout
-import com.smaart.idrico.service.tokenExpiration
 import com.smaart.idrico.view.LoginView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -193,9 +192,4 @@ open class Base(private val themeId:Int?=null): AppCompatActivity(){
             if (!layout.isNullOrEmpty())layout else throw IllegalStateException("Timeout waiting for buffed data")
         }
     }
-    private fun startTokenExpirationService() {
-        val serviceIntent=Intent(applicationContext, tokenExpiration::class.java)
-        ContextCompat.startForegroundService(applicationContext,serviceIntent)
-    }
-
 }
